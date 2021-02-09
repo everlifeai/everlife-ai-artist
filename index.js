@@ -21,7 +21,7 @@ function loadConfig() {
     if(process.env.AIARTIST_PORT) {
         cfg.PORT = process.env.AIARTIST_PORT
     } else {
-        cfg.PORT = 8576
+        cfg.PORT = 8195
     }
     return cfg
 }
@@ -71,7 +71,7 @@ function drawMeLike(style, imgpath, outfile, cb) {
     const imgmount = path.join("/in", path.basename(imgpath))
     const imgin = path.resolve(imgpath)
 
-    const cmd = `docker run --rm -i -v "${pwd}/checkpoints:/checkpoints" -v "${pwd}/out":/out -v "${imgin}":"${imgmount}" aiartist python evaluate.py --checkpoint "/checkpoints/${style}.ckpt" --in-path "${imgmount}" --out-path /out/${outfile}`
+    const cmd = `docker run --rm -i -v "${pwd}/checkpoints:/checkpoints" -v "${pwd}/out":/out -v "${imgin}":"${imgmount}" aiartist python3 evaluate.py --checkpoint "/checkpoints/${style}.ckpt" --in-path "${imgmount}" --out-path /out/${outfile}`
 
     fs.stat(imgin, (err, stats) => {
         if(err || !stats.isFile()) cb(`${imgpath} not found`)
@@ -81,6 +81,7 @@ function drawMeLike(style, imgpath, outfile, cb) {
                 else {
                     exec(cmd, (err, stdout, stderr) =>{
                         if(err) {
+                          console.log(err)
                             if(err.message.indexOf && err.message.indexOf("System Memory")) {
                                 cb(`File too big. Try with smaller version`)
                             }

@@ -1,19 +1,20 @@
-FROM ubuntu:16.04 
+FROM ubuntu:20.04
 
 WORKDIR /
 
-RUN apt-get update && apt-get install -y \
-    python \
-    python-pip \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+    tzdata \
+    python3 \
+    python3-pip \
     wget \
-    unzip
+    unzip \
+    ffmpeg
 
-RUN pip install tensorflow scipy moviepy 
-RUN imageio_download_bin ffmpeg
+RUN pip3 install tensorflow scipy moviepy 
 
-RUN wget https://github.com/lengstrom/fast-style-transfer/archive/master.zip && unzip -q master.zip  && rm -rf master.zip
+RUN wget https://codeload.github.com/lengstrom/fast-style-transfer/zip/master && mv master master.zip && unzip -q master.zip  && rm -rf master.zip
 
-ADD ./*.ckpt /fast-style-transfer-master/
+ADD ./checkpoints/*.ckpt /fast-style-transfer-master/
 
 RUN apt-get remove -y \
     wget \
