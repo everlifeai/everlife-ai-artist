@@ -11,11 +11,15 @@ require('dotenv').config()
 const ipaddr = require('./ipaddr')
 
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './.tmp'
-const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || './out'
+const UPLOAD_DIR = process.env.UPLOAD_DIR || './tmp'
+const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR 
 const IMG_BASE_URL = process.env.IMG_BASE_URL
 if(!IMG_BASE_URL) {
-    console.log('Image base url missing')
+    console.log(`Please add the environment variable IMG_BASE_URL`)
+    process.exit(1)
+}
+if(!DOWNLOAD_DIR) {
+    console.log(`Please add the environment variable DOWNLOAD_DIR`)
     process.exit(1)
 }
 /*      understand/
@@ -52,12 +56,9 @@ function handleReq(req, res) {
               res.end(String(err));
               return;
             }
-            console.log(files.img.path)
             return draw(files.img.path,fields.style, res)
         })
-       // return draw(req, res)
-    } 
-    //return reply400('Not found', res)
+    }
 }
 
 function reply400(err, res) {
@@ -90,7 +91,6 @@ function draw(imgpath, style, res ) {
 function drawMeLike(style, imgpath, outfile, cb) {
     if(!style || !imgpath) return cb(`Missing required parameters!`)
     const pwd = process.cwd()
-    console.log(imgpath)
     const imgmount = path.join("/in", path.basename(imgpath))
     const imgin = path.resolve(imgpath)
 
@@ -104,7 +104,6 @@ function drawMeLike(style, imgpath, outfile, cb) {
                 else {
                     exec(cmd, (err, stdout, stderr) =>{
                         if(err) {
-                          console.log(err)
                             if(err.message.indexOf && err.message.indexOf("System Memory")) {
                                 cb(`File too big. Try with smaller version`)
                             }
