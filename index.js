@@ -5,9 +5,19 @@ const fs = require('fs')
 const http = require('http')
 const url = require('url')
 const shortid = require('shortid')
+const formidable = require('formidable')
+require('dotenv').config()
 
 const ipaddr = require('./ipaddr')
 
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || './.tmp'
+const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || './out'
+const IMG_BASE_URL = process.env.IMG_BASE_URL
+if(!IMG_BASE_URL) {
+    console.log('Image base url missing')
+    process.exit(1)
+}
 /*      understand/
  * The main entry point of the program
  */
@@ -33,8 +43,21 @@ function startHttpServer(cfg) {
 }
 
 function handleReq(req, res) {
-    if(req.url.startsWith('/draw?')) return draw(req, res)
-    return reply400('Not found', res)
+    if(req.url.startsWith('/draw?')){
+        const form = formidable({ multiples: true });
+		form.uploadDir = UPLOAD_DIR	
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+              res.writeHead(err.httpCode || 400, { 'Content-Type': 'text/plain' });
+              res.end(String(err));
+              return;
+            }
+            console.log(files.img.path)
+            return draw(files.img.path,fields.style, res)
+        })
+       // return draw(req, res)
+    } 
+    //return reply400('Not found', res)
 }
 
 function reply400(err, res) {
@@ -44,12 +67,12 @@ function reply400(err, res) {
     else res.end()
 }
 
-function draw(req, res) {
-    let q = url.parse(req.url, true).query
+function draw(imgpath, style, res ) {
+    //let q = url.parse(req.url, true).query
     let name = shortid.generate()
     let outfile = `${name}.jpg`
 
-    drawMeLike(q.style, q.imgpath, outfile, (err, outpath) => {
+    drawMeLike(style, imgpath, outfile, (err, outpath) => {
         if(err) {
             reply400(err, res)
         } else {
@@ -67,11 +90,11 @@ function draw(req, res) {
 function drawMeLike(style, imgpath, outfile, cb) {
     if(!style || !imgpath) return cb(`Missing required parameters!`)
     const pwd = process.cwd()
-
+    console.log(imgpath)
     const imgmount = path.join("/in", path.basename(imgpath))
     const imgin = path.resolve(imgpath)
 
-    const cmd = `docker run --rm -i -v "${pwd}/checkpoints:/checkpoints" -v "${pwd}/out":/out -v "${imgin}":"${imgmount}" aiartist python3 evaluate.py --checkpoint "/checkpoints/${style}.ckpt" --in-path "${imgmount}" --out-path /out/${outfile}`
+    const cmd = `docker run --rm -i -v "${pwd}/checkpoints:/checkpoints" -v "${DOWNLOAD_DIR}":/out -v "${imgin}":"${imgmount}" aiartist python3 evaluate.py --checkpoint "/checkpoints/${style}.ckpt" --in-path "${imgmount}" --out-path /out/${outfile}`
 
     fs.stat(imgin, (err, stats) => {
         if(err || !stats.isFile()) cb(`${imgpath} not found`)
@@ -86,7 +109,7 @@ function drawMeLike(style, imgpath, outfile, cb) {
                                 cb(`File too big. Try with smaller version`)
                             }
                         } else {
-                            cb(null, path.join(pwd, 'out', outfile))
+                            cb(null, path.join(DOWNLOAD_DIR, outfile))
                         }
                     })
                 }
