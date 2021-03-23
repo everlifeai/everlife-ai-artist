@@ -6,12 +6,13 @@ const http = require('http')
 const url = require('url')
 const shortid = require('shortid')
 const formidable = require('formidable')
+const os = require('os')
 require('dotenv').config()
 
 const ipaddr = require('./ipaddr')
 
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './tmp'
+const UPLOAD_DIR = os.tmpdir()
 const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR 
 const IMG_BASE_URL = process.env.IMG_BASE_URL
 if(!IMG_BASE_URL) {
