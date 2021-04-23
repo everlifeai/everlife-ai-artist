@@ -78,7 +78,8 @@ function draw(imgpath, style, res ) {
         if(err) {
             reply400(err, res)
         } else {
-            res.end(outpath)
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ img: outpath}))
         }
     })
 }
@@ -109,7 +110,8 @@ function drawMeLike(style, imgpath, outfile, cb) {
                                 cb(`File too big. Try with smaller version`)
                             }
                         } else {
-                            cb(null, path.join(DOWNLOAD_DIR, outfile))
+                            let img = (IMG_BASE_URL.endsWith('/') ? IMG_BASE_URL + outfile : IMG_BASE_URL + '/' + outfile)
+                            cb(null, img )
                         }
                     })
                 }
